@@ -7,6 +7,7 @@ Test cases can be run with the following:
 """
 import os
 import logging
+import json
 from datetime import date
 from unittest import TestCase
 from tests.factories import AccountFactory
@@ -200,3 +201,40 @@ class TestAccountService(TestCase):
         with self.assertRaises(DataValidationError) as ctx:
             acc.deserialize({"email": "no-name@example.com"})
         self.assertIn("missing name", str(ctx.exception))
+
+class TestListAccounts(TestAccountService):
+    def test_list_accounts_empty(self):
+        """Listing accounts when none exist returns [] and 200"""
+        response = self.client.get("/accounts")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 0)
+
+    def test_list_accounts_non_empty(self):
+        """Listing accounts when there are accounts returns them all"""
+        # Create two accounts with the same helper you’ve used elsewhere
+        post_data1 = {
+            "name": "Bob", "email": "bob@example.com",
+            "address": "2 Pine St", "phone_number": "555-0002"
+        }
+        post_data2 = {
+            "name": "Carol", "email": "carol@example.com",
+            "address": "3 Oak St", "phone_number": "555-0003"
+        }
+        r1 = self.client.post("/accounts", data=json.dumps(post_data1),
+                              content_type="application/json")
+        self.assertEqual(r1.status_code, status.HTTP_201_CREATED)
+        r2 = self.client.post("/accounts", data=json.dumps(post_data2),
+                              content_type="application/json")
+        self.assertEqual(r2.status_code, status.HTTP_201_CREATED)
+
+        response = self.client.get("/accounts")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        data = response.get_json()
+        self.assertIsInstance(data, list)
+        self.assertEqual(len(data), 2)
+
+        names = {acct["name"] for acct in data}
+        self.assertIn("Bob", names)
+        self.assertIn("Carol", names)
