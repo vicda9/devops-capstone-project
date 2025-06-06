@@ -238,3 +238,27 @@ class TestListAccounts(TestAccountService):
         names = {acct["name"] for acct in data}
         self.assertIn("Bob", names)
         self.assertIn("Carol", names)
+
+class TestUpdateAccount(TestAccountService):
+    def test_update_account_success(self):
+        """ Update an existing account’s phone_number """
+        post_data = {"name": "Dave", "email": "dave@example.com", "address": "4 Birch St", "phone_number": "555-0004"}
+        r1 = self.client.post("/accounts", data=json.dumps(post_data), content_type="application/json")
+        self.assertEquals(r1.status_code, status.HTTP_201_CREATED)
+        account_id = r1.get_json()["id"]
+
+        # Update only phone_number
+        update_data = {"phone_number": "555-9999"}
+        response = self.client.put(f"/accounts/{account_id}", 
+                                   data=json.dumps(update_data), 
+                                   content_type="application/json")
+        self.assertEquals(response.status_code, status.HTTP_200_OK)
+        updated = response.get_json()
+        self.assertEquals(updated["id"], account_id)
+        self.assertEquals(updated["phone_number"], "555-9999")
+
+    def test_update_account_not_found(self):
+        """ Update non-existent account returns 404 """
+        update_data = {"phone_number": "555-9999"}
+        response = self.client.put("/accounts/0", data=json.dumps(update_data), content_type="application/json")
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
