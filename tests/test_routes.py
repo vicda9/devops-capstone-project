@@ -262,3 +262,24 @@ class TestUpdateAccount(TestAccountService):
         update_data = {"phone_number": "555-9999"}
         response = self.client.put("/accounts/0", data=json.dumps(update_data), content_type="application/json")
         self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
+class TestDeleteAccount(TestAccountService):
+    def test_delete_account_success(self):
+        """ Delete an existing account successfully """
+        post_data = {"name": "Eve", "email": "eve@example.com", "address": "5 Cedar St", "phone_number": "555-0005"}
+        r1 = self.client.post("/accounts", data=json.dumps(post_data), content_type="application/json")
+        self.assertEquals(r1.status_code, status.HTTP_201_CREATED)
+        account_id = r1.get_json()["id"]
+
+        # Delete that account
+        response = self.client.delete(f"/accounts/{account_id}")
+        self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Attempt to read it: should return 404
+        response = self.client.get(f"/accounts/{account_id}")
+        self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_account_not_found(self):
+        """ Deleting a non-existent account should still return 204 """
+        response = self.client.delete("/accounts/0")
+        self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
