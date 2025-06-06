@@ -7,10 +7,11 @@ Test cases can be run with the following:
 """
 import os
 import logging
+from datetime import date
 from unittest import TestCase
 from tests.factories import AccountFactory
 from service.common import status  # HTTP Status Codes
-from service.models import db, Account, init_db
+from service.models import db, Account, DataValidationError, init_db
 from service.routes import app
 
 DATABASE_URI = os.getenv(
@@ -123,4 +124,79 @@ class TestAccountService(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-    # ADD YOUR TEST CASES HERE ...
+    def test_read_an_account(self):
+        """It should GET a single Account by ID"""
+        # 1) create one account
+        account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        account_id = resp.get_json()["id"]
+
+        # 2) read that account
+        resp = self.client.get(f"{BASE_URL}/{account_id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], account_id)
+        self.assertEqual(data["name"], account.name)
+        self.assertEqual(data["email"], account.email)
+        self.assertEqual(data["address"], account.address)
+        self.assertEqual(data["phone_number"], account.phone_number)
+
+    def test_read_account_not_found(self):
+        """It should return 404_NOT_FOUND when the Account ID is missing"""
+        resp = self.client.get(f"{BASE_URL}/0")        # ID 0 won't exist
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_read_account_happy_path(self):
+        """It should GET a single account and return 200_OK"""
+        # Arrange: create one record via the API
+        account = AccountFactory()
+        resp = self.client.post(BASE_URL, json=account.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        account_id = resp.get_json()["id"]
+
+        # Act: read it back
+        resp = self.client.get(f"{BASE_URL}/{account_id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        # Assert: payload integrity
+        data = resp.get_json()
+        self.assertEqual(data["id"], account_id)
+        self.assertEqual(data["name"], account.name)
+        self.assertEqual(data["email"], account.email)
+        self.assertEqual(data["address"], account.address)
+        self.assertEqual(data["phone_number"], account.phone_number)
+
+    def test_read_account_bad_id_type(self):
+        """It should return 404 (or 400) when the ID is not an int"""
+        # Flask's <int:> converter will short-circuit anything non-numeric.
+        resp = self.client.get(f"{BASE_URL}/abc")
+        # Depending on your route setup this could be 404, 400, or 308 (redirect)
+        self.assertIn(resp.status_code, [status.HTTP_404_NOT_FOUND,
+                                        status.HTTP_400_BAD_REQUEST])
+
+    def test_read_account_negative_id(self):
+        """Edge case: negative integer returns 404_NOT_FOUND"""
+        resp = self.client.get(f"{BASE_URL}/-1")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_account_repr_and_date_default(self):
+        """Covers __init__, deserialize else-branch, and __repr__"""
+        acc = Account()                       # hits PersistentBase.__init__
+        acc.deserialize({
+            "name": "Alice",
+            "email": "alice@example.com",
+            "address": "1 Elm St"
+            # no date_joined → executes line 127
+        })
+        self.assertIn("<Account Alice", repr(acc))   # line 98
+        self.assertEqual(acc.date_joined, date.today())
+
+    def test_deserialize_key_error(self):
+        """Covers DataValidationError branch (missing field)"""
+        acc = Account()
+        with self.assertRaises(DataValidationError) as ctx:
+            acc.deserialize({"email": "no-name@example.com"})
+        self.assertIn("missing name", str(ctx.exception))
