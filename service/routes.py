@@ -66,7 +66,8 @@ def create_accounts():
 def list_accounts():
     """Lists all accounts."""
     accounts = [acct.serialize() for acct in Account.all()]
-    return jsonify(accounts), status.HTTP_200_OK 
+    return jsonify(accounts), status.HTTP_200_OK
+
 
 ######################################################################
 # READ AN ACCOUNT
