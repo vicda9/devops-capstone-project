@@ -13,7 +13,7 @@ from service.common import log_handlers
 
 # Create Flask application
 app = Flask(__name__)
-talisman = Talisman(app)
+talisman = Talisman(app, force_https=False)
 app.config.from_object(config)
 
 
