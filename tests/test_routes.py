@@ -304,3 +304,7 @@ class TestSecurityHeaders(TestCase):
         self.assertEqual(headers.get('X-Content-Type-Options'), 'nosniff')
         self.assertIn("default-src 'self'; object-src 'none'", headers.get('Content-Security-Policy'))
         self.assertEqual(headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+
+    def test_cors_header_present(self):
+        response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
