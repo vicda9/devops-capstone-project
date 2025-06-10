@@ -11,6 +11,7 @@ import json
 from datetime import date
 from unittest import TestCase
 from tests.factories import AccountFactory
+from service import talisman
 from service.common import status  # HTTP Status Codes
 from service.models import db, Account, DataValidationError, init_db
 from service.routes import app
@@ -20,6 +21,8 @@ DATABASE_URI = os.getenv(
 )
 
 BASE_URL = "/accounts"
+
+HTTPS_ENVIRON = {'wsgi.url_scheme': 'https'}
 
 
 ######################################################################
@@ -36,6 +39,7 @@ class TestAccountService(TestCase):
         app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URI
         app.logger.setLevel(logging.CRITICAL)
         init_db(app)
+        talisman.force_https = False
 
     @classmethod
     def tearDownClass(cls):
@@ -283,3 +287,24 @@ class TestDeleteAccount(TestAccountService):
         """ Deleting a non-existent account should still return 204 """
         response = self.client.delete("/accounts/0")
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
+
+class TestSecurityHeaders(TestCase):
+    def setUp(self):
+        from service import create_app, db, talisman
+        self.app = create_app()
+        self.client = self.app.test_client()
+        talisman.force_https = False
+
+    def test_security_headers_present(self):
+        # request over https to root URL
+        response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
+        headers = response.headers
+
+        self.assertEqual(headers.get('X-Frame-Options'), 'SAMEORIGIN')
+        self.assertEqual(headers.get('X-Content-Type-Options'), 'nosniff')
+        self.assertIn("default-src 'self'; object-src 'none'", headers.get('Content-Security-Policy'))
+        self.assertEqual(headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+
+    def test_cors_header_present(self):
+        response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
+        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
