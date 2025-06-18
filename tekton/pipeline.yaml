@@ -92,11 +92,14 @@ spec:
       params:
         - name: SCRIPT
           value: |
+            cd $(workspaces.source.path)
+
             echo "Updating manifest..."
             sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
             cat deploy/deployment.yaml
-            echo "Deploying to OpenShift..."
+
+            echo "Deploying to OpenShift…"
             oc apply -f deploy/
-            oc get pods -l app=accounts
+            oc get all -l app=accounts
       runAfter:
         - build
