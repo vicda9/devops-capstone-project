@@ -127,7 +127,8 @@ class TestAccountService(TestCase):
             json=account.serialize(),
             content_type="test/html"
         )
-        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        self.assertEqual(response.status_code,
+                         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     def test_read_an_account(self):
         """It should GET a single Account by ID"""
@@ -178,9 +179,8 @@ class TestAccountService(TestCase):
         """It should return 404 (or 400) when the ID is not an int"""
         # Flask's <int:> converter will short-circuit anything non-numeric.
         resp = self.client.get(f"{BASE_URL}/abc")
-        # Depending on your route setup this could be 404, 400, or 308 (redirect)
         self.assertIn(resp.status_code, [status.HTTP_404_NOT_FOUND,
-                                        status.HTTP_400_BAD_REQUEST])
+                                         status.HTTP_400_BAD_REQUEST])
 
     def test_read_account_negative_id(self):
         """Edge case: negative integer returns 404_NOT_FOUND"""
@@ -205,6 +205,7 @@ class TestAccountService(TestCase):
         with self.assertRaises(DataValidationError) as ctx:
             acc.deserialize({"email": "no-name@example.com"})
         self.assertIn("missing name", str(ctx.exception))
+
 
 class TestListAccounts(TestAccountService):
     def test_list_accounts_empty(self):
@@ -243,18 +244,23 @@ class TestListAccounts(TestAccountService):
         self.assertIn("Bob", names)
         self.assertIn("Carol", names)
 
+
 class TestUpdateAccount(TestAccountService):
     def test_update_account_success(self):
         """ Update an existing account’s phone_number """
-        post_data = {"name": "Dave", "email": "dave@example.com", "address": "4 Birch St", "phone_number": "555-0004"}
-        r1 = self.client.post("/accounts", data=json.dumps(post_data), content_type="application/json")
+        post_data = {"name": "Dave",
+                     "email": "dave@example.com",
+                     "address": "4 Birch St",
+                     "phone_number": "555-0004"}
+        r1 = self.client.post("/accounts",
+                              data=json.dumps(post_data),
+                              content_type="application/json")
         self.assertEquals(r1.status_code, status.HTTP_201_CREATED)
         account_id = r1.get_json()["id"]
 
-        # Update only phone_number
         update_data = {"phone_number": "555-9999"}
-        response = self.client.put(f"/accounts/{account_id}", 
-                                   data=json.dumps(update_data), 
+        response = self.client.put(f"/accounts/{account_id}",
+                                   data=json.dumps(update_data),
                                    content_type="application/json")
         self.assertEquals(response.status_code, status.HTTP_200_OK)
         updated = response.get_json()
@@ -264,14 +270,23 @@ class TestUpdateAccount(TestAccountService):
     def test_update_account_not_found(self):
         """ Update non-existent account returns 404 """
         update_data = {"phone_number": "555-9999"}
-        response = self.client.put("/accounts/0", data=json.dumps(update_data), content_type="application/json")
+        response = self.client.put(
+            "/accounts/0",
+            data=json.dumps(update_data),
+            content_type="application/json",
+        )
         self.assertEquals(response.status_code, status.HTTP_404_NOT_FOUND)
+
 
 class TestDeleteAccount(TestAccountService):
     def test_delete_account_success(self):
-        """ Delete an existing account successfully """
-        post_data = {"name": "Eve", "email": "eve@example.com", "address": "5 Cedar St", "phone_number": "555-0005"}
-        r1 = self.client.post("/accounts", data=json.dumps(post_data), content_type="application/json")
+        post_data = {"name": "Eve",
+                     "email": "eve@example.com",
+                     "address": "5 Cedar St",
+                     "phone_number": "555-0005"}
+        r1 = self.client.post("/accounts",
+                              data=json.dumps(post_data),
+                              content_type="application/json")
         self.assertEquals(r1.status_code, status.HTTP_201_CREATED)
         account_id = r1.get_json()["id"]
 
@@ -288,9 +303,10 @@ class TestDeleteAccount(TestAccountService):
         response = self.client.delete("/accounts/0")
         self.assertEquals(response.status_code, status.HTTP_204_NO_CONTENT)
 
+
 class TestSecurityHeaders(TestCase):
     def setUp(self):
-        from service import create_app, db, talisman
+        from service import create_app, talisman
         self.app = create_app()
         self.client = self.app.test_client()
         talisman.force_https = False
@@ -301,10 +317,22 @@ class TestSecurityHeaders(TestCase):
         headers = response.headers
 
         self.assertEqual(headers.get('X-Frame-Options'), 'SAMEORIGIN')
-        self.assertEqual(headers.get('X-Content-Type-Options'), 'nosniff')
-        self.assertIn("default-src 'self'; object-src 'none'", headers.get('Content-Security-Policy'))
-        self.assertEqual(headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin')
+        self.assertEqual(headers.get(
+            'X-Content-Type-Options'),
+            'nosniff'
+        )
+        self.assertIn(
+            "default-src 'self'; object-src 'none'",
+            headers.get("Content-Security-Policy"),
+        )
+        self.assertEqual(headers.get(
+            'Referrer-Policy'),
+            'strict-origin-when-cross-origin'
+        )
 
     def test_cors_header_present(self):
         response = self.client.get('/', environ_overrides=HTTPS_ENVIRON)
-        self.assertEqual(response.headers.get('Access-Control-Allow-Origin'), '*')
+        self.assertEqual(
+            response.headers.get('Access-Control-Allow-Origin'),
+            '*'
+        )
