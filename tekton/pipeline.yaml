@@ -84,7 +84,7 @@ spec:
 
     - name: deploy
       workspaces:
-        - name: source
+        - name: manifest-dir
           workspace: pipeline-workspace
       taskRef:
         kind: ClusterTask
@@ -92,14 +92,11 @@ spec:
       params:
         - name: SCRIPT
           value: |
-            cd $(workspaces.source.path)
-
             echo "Updating manifest..."
             sed -i "s|IMAGE_NAME_HERE|$(params.build-image)|g" deploy/deployment.yaml
             cat deploy/deployment.yaml
-
-            echo "Deploying to OpenShift…"
+            echo "Deploying to OpenShift..."
             oc apply -f deploy/
-            oc get all -l app=accounts
+            oc get pods -l app=accounts
       runAfter:
         - build
