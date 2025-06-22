@@ -75,8 +75,10 @@ spec:
         - name: DATABASE_URI
           value: $(params.database_uri)
       script: |
-        #!/usr/bin/env bash
+        #!/usr/bin/bash
         set -e
+        echo "***** Installing dependencies *****"
         python -m pip install --upgrade pip wheel
         pip install -qr requirements.txt
+        echo "***** Running nosetests with: $(params.args)"
         nosetests $(params.args)
