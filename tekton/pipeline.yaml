@@ -62,7 +62,7 @@ spec:
         name: nose
       params:
         - name: database_uri
-          value: sqlite:///test.db
+          value: "sqlite:///test.db"
         - name: args
           value: "-v --with-spec --spec-color"
       runAfter:
@@ -73,14 +73,14 @@ spec:
         - name: source
           workspace: pipeline-workspace
       taskRef:
-        kind: ClusterTask
         name: buildah
+        kind: ClusterTask
       params:
         - name: IMAGE
           value: "$(params.build-image)"
       runAfter:
-        - lint
         - tests
+        - lint
 
     - name: deploy
       workspaces:
