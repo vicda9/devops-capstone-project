@@ -6,125 +6,116 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9](https://img.shields.io/badge/Python-3.9-green.svg)](https://shields.io/)
 
-This repository contains the starter code for the project in [**IBM-CD0285EN-SkillsNetwork DevOps Capstone Project**](https://www.coursera.org/learn/devops-capstone-project?specialization=devops-and-software-engineering) which is part of the [**IBM DevOps and Software Engineering Professional Certificate**](https://www.coursera.org/professional-certificates/devops-and-software-engineering)
+Customer Accounts Microservice
+Overview
 
-## Usage
+A RESTful Python service for managing customer accounts, built with Flask and SQLAlchemy. It exposes CRUD operations (create, read, update, delete, list) over HTTP and persists data to a relational database.
 
-You should use this template to start your DevOps Capstone project. It contains all of the code that you will need to get started.
 
-Do Not fork this code! It is meant to be used by pressing the  <span style=color:white;background:green>**Use this Template**</span> button in GitHub. This will copy the code to your own repository with no connection back to the original repository like a fork would. This is what you want.
+Technology Stack:
 
-## Development Environment
+Flask for the web framework
 
-These labs are designed to be executed in the IBM Developer Skills Network Cloud IDE with OpenShift. Please use the links provided in the Coursera Capstone project to access the lab environment.
+SQLAlchemy for ORM and data modeling
 
-Once you are in the lab environment, you can initialize it with `bin/setup.sh` by sourcing it. (*Note: DO NOT run this program as a bash script. It sets environment variable and so must be sourced*):
+Nose for unit testing with a 95% coverage threshold
 
-```bash
-source bin/setup.sh
-```
+Flake8 for linting and code quality enforcement
 
-This will install Python 3.9, make it the default, modify the bash prompt, create a Python virtual environment and activate it.
+Flask-Talisman and Flask-CORS for security headers and CORS support
 
-After sourcing it you prompt should look like this:
+Docker and OpenShift/Kubernetes for containerization and deployment
 
-```bash
-(venv) theia:project$
-```
+Tekton pipeline for automated CI/CD
 
-## Useful commands
 
-Under normal circumstances you should not have to run these commands. They are performed automatically at setup but may be useful when things go wrong:
+Chronological Enhancements and Revisions
 
-### Activate the Python 3.9 virtual environment
+1. Initial Service Implementation and TDD
 
-You can activate the Python 3.9 environment with:
+    Test cases for CRUD operations were defined under tests/, covering models, routes, and CLI commands.
 
-```bash
-source ~/venv/bin/activate
-```
+    The Account model (fields: id, name, email, address, phone_number, date_joined) was implemented in service/models.py.
 
-### Installing Python dependencies
+    REST API endpoints were implemented in service/routes.py to satisfy each test.
 
-These dependencies are installed as part of the setup process but should you need to install them again, first make sure that the Python 3.9 virtual environment is activated and then use the `make install` command:
+2. Command-Line Interface
 
-```bash
-make install
-```
+    db-create and other Flask CLI commands were added in service/common/cli_commands.py to automate database setup.
 
-### Starting the Postgres Docker container
+3. Code Quality and Security
 
-The labs use Postgres running in a Docker container. If for some reason the service is not available you can start it with:
+    Flake8 configuration was added to enforce style, complexity, and line-length limits.
+ 
+    A GitHub Actions workflow (CI) was configured to run linting and unit tests on every push and pull request.
 
-```bash
-make db
-```
+    Security headers and CORS policies were integrated by revising service/config.py and initializing Flask-Talisman and Flask-CORS in service/routes.py.
 
-You can use the `docker ps` command to make sure that postgres is up and running.
+4. Containerization
 
-## Project layout
+    A Dockerfile was authored to build a container image named “accounts,” based on python:3.9-slim, installing dependencies, and configuring gunicorn.
 
-The code for the microservice is contained in the `service` package. All of the test are in the `tests` folder. The code follows the **Model-View-Controller** pattern with all of the database code and business logic in the model (`models.py`), and all of the RESTful routing on the controller (`routes.py`).
+5. Database Service on OpenShift
 
-```text
-├── service         <- microservice package
-│   ├── common/     <- common log and error handlers
-│   ├── config.py   <- Flask configuration object
-│   ├── models.py   <- code for the persistent model
-│   └── routes.py   <- code for the REST API routes
-├── setup.cfg       <- tools setup config
-└── tests                       <- folder for all of the tests
-    ├── factories.py            <- test factories
-    ├── test_cli_commands.py    <- CLI tests
-    ├── test_models.py          <- model unit tests
-    └── test_routes.py          <- route unit tests
-```
+    A PostgreSQL instance was provisioned in OpenShift, with secrets created for database credentials.
 
-## Data Model
+    Environment variables for DATABASE_HOST, DATABASE_NAME, DATABASE_USER, and DATABASE_PASSWORD were mapped from those secrets.
 
-The Account model contains the following fields:
+5. Kubernetes/OpenShift Manifests
 
-| Name | Type | Optional |
-|------|------|----------|
-| id | Integer| False |
-| name | String(64) | False |
-| email | String(64) | False |
-| address | String(256) | False |
-| phone_number | String(32) | True |
-| date_joined | Date | False |
+    Deployment and Service YAML manifests were placed in deploy/deployment.yaml and deploy/service.yaml, using the image registry and wiring secrets.
 
-## Your Task
+    A PersistentVolumeClaim was defined in pvc.yaml to support workspace persistence during pipeline runs.
 
-Complete this microservice by implementing REST API's for `READ`, `UPDATE`, `DELETE`, and `LIST` while maintaining **95%** code coverage. In true **Test Driven Development** fashion, first write tests for the code you "wish you had", and then write the code to make them pass.
+7. Automated CI/CD with Tekton
 
-## Local Kubernetes Development
+    A CD pipeline definition was added in pipeline.yaml, orchestrating tasks for cleanup, git-clone, lint (flake8), tests (nose), image build (buildah), and deploy (openshift-client).
 
-This repo can also be used for local Kubernetes development. It is not advised that you run these commands in the Cloud IDE environment. The purpose of these commands are to simulate the Cloud IDE environment locally on your computer. 
+    Custom Task definitions for echo, cleanup, and nose were created in tasks.yaml to support pipeline steps.
 
-At a minimum, you will need [Docker Desktop](https://www.docker.com/products/docker-desktop) installed on your computer. For the full development environment, you will also need [Visual Studio Code](https://code.visualstudio.com) with the [Remote Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) extension from the Visual Studio Marketplace. All of these can be installed manually by clicking on the links above or you can use a package manager like **Homebrew** on Mac of **Chocolatey** on Windows.
+    The deploy step applies the manifests in deploy/ and verifies pod creation via oc get pods -l app=accounts.
 
-Please only use these commands for working stand-alone on your own computer with the VSCode Remote Container environment provided.
 
-1. Bring up a local K3D Kubernetes cluster
+Key Contributions:
 
-    ```bash
-    $ make cluster
-    ```
+service/models.py – Definition of the Account data model, including fields for id, name, email, address, phone_number, and date_joined, along with persistence logic.
+service/routes.py – Implementation of REST API endpoints to handle account creation, retrieval, update, deletion, and listing.
+service/config.py – Central Flask configuration, integration of Flask-Talisman for security headers and Flask-CORS for cross-origin policies.
+service/common/log_handlers.py & error_handlers.py – Consolidated logging setup and uniform error responses across the microservice.
+service/common/cli_commands.py – Custom Flask CLI commands enabling database initialization and management tasks via the command line.
+tests/ – Comprehensive unit tests for models, routes, and CLI commands (68 tests, >94% coverage), ensuring reliability and adherence to TDD practices.
+Dockerfile – Construction of a lightweight Python container image, installing only required runtime dependencies.
+deploy/deployment.yaml & deploy/service.yaml – Kubernetes/OpenShift manifest files defining Deployment (3 replicas) and Service (ClusterIP on port 8080) for the accounts microservice.
+pipeline.yaml & tasks.yaml – Tekton CD pipeline configuration automating source clone, code linting (Flake8), unit testing (nosetests), image build (Buildah), and deployment (oc apply) steps.
 
-2. Install Tekton
 
-    ```bash
-    $ make tekton
-    ```
 
-3. Install the ClusterTasks that the Cloud IDE has
+service/  
+  common/        ← log and error handlers, CLI commands  
+  config.py      ← Flask application configuration  
+  models.py      ← SQLAlchemy model definitions  
+  routes.py      ← REST API route implementations  
 
-    ```bash
-    $ make clustertasks
-    ```
+tests/           ← unit tests and factories  
+  factories.py  
+  test_cli_commands.py  
+  test_models.py  
+  test_routes.py  
 
-You can now perform Tekton development locally, just like in the Cloud IDE lab environment.
+deploy/          ← Kubernetes/OpenShift manifests  
+  deployment.yaml  
+  service.yaml  
 
+pvc.yaml         ← PersistentVolumeClaim for pipeline workspace  
+pipeline.yaml    ← Tekton CD pipeline specification  
+tasks.yaml       ← Tekton Task definitions (echo, cleanup, nose)  
+Dockerfile       ← Container image build instructions  
+
+setup.cfg        ← tooling and lint configuration  
+
+
+
+Original source attributed to the upstream repository. Forked and enhanced according to capstone requirements.
 ## Author
 
 [John Rofrano](https://www.coursera.org/instructor/johnrofrano), Senior Technical Staff Member, DevOps Champion, @ IBM Research, and Instructor @ Coursera
