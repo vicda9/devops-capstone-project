@@ -1,4 +1,4 @@
-# DevOps Capstone Template
+# Victor Lopez CapStone Project - 2025
 
 ![Build Status](https://github.com/vicda9/devops-capstone-project/actions/workflows/ci-build.yaml/badge.svg)
 
@@ -6,30 +6,34 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9](https://img.shields.io/badge/Python-3.9-green.svg)](https://shields.io/)
 
-Customer Accounts Microservice
-Overview
+
+
+
+## Customer Accounts Service
+### OverView:
 
 A RESTful Python service for managing customer accounts, built with Flask and SQLAlchemy. It exposes CRUD operations (create, read, update, delete, list) over HTTP and persists data to a relational database.
 
 
-Technology Stack:
 
-Flask for the web framework
+### Technology Stack:
 
-SQLAlchemy for ORM and data modeling
+- Flask for the web framework
 
-Nose for unit testing with a 95% coverage threshold
+- SQLAlchemy for ORM and data modeling
 
-Flake8 for linting and code quality enforcement
+- Nose for unit testing with a 95% coverage threshold
 
-Flask-Talisman and Flask-CORS for security headers and CORS support
+- Flake8 for linting and code quality enforcement
 
-Docker and OpenShift/Kubernetes for containerization and deployment
+- Flask-Talisman and Flask-CORS for security headers and CORS support
 
-Tekton pipeline for automated CI/CD
+- Docker and OpenShift/Kubernetes for containerization and deployment
+
+- Tekton pipeline for automated CI/CD
 
 
-Chronological Enhancements and Revisions
+## Chronological Enhancements and Revisions:
 
 1. Initial Service Implementation and TDD
 
@@ -76,19 +80,29 @@ Chronological Enhancements and Revisions
     The deploy step applies the manifests in deploy/ and verifies pod creation via oc get pods -l app=accounts.
 
 
-Key Contributions:
+
+## Key Contributions:
 
 service/models.py – Definition of the Account data model, including fields for id, name, email, address, phone_number, and date_joined, along with persistence logic.
+
 service/routes.py – Implementation of REST API endpoints to handle account creation, retrieval, update, deletion, and listing.
+
 service/config.py – Central Flask configuration, integration of Flask-Talisman for security headers and Flask-CORS for cross-origin policies.
+
 service/common/log_handlers.py & error_handlers.py – Consolidated logging setup and uniform error responses across the microservice.
+
 service/common/cli_commands.py – Custom Flask CLI commands enabling database initialization and management tasks via the command line.
+
 tests/ – Comprehensive unit tests for models, routes, and CLI commands (68 tests, >94% coverage), ensuring reliability and adherence to TDD practices.
+
 Dockerfile – Construction of a lightweight Python container image, installing only required runtime dependencies.
+
 deploy/deployment.yaml & deploy/service.yaml – Kubernetes/OpenShift manifest files defining Deployment (3 replicas) and Service (ClusterIP on port 8080) for the accounts microservice.
+
 pipeline.yaml & tasks.yaml – Tekton CD pipeline configuration automating source clone, code linting (Flake8), unit testing (nosetests), image build (Buildah), and deployment (oc apply) steps.
 
 
+### Enhancement Map Layout:
 
 service/  
   common/        ← log and error handlers, CLI commands  
@@ -113,9 +127,10 @@ Dockerfile       ← Container image build instructions
 
 setup.cfg        ← tooling and lint configuration  
 
-
+---
 
 Original source attributed to the upstream repository. Forked and enhanced according to capstone requirements.
+
 ## Author
 
 [John Rofrano](https://www.coursera.org/instructor/johnrofrano), Senior Technical Staff Member, DevOps Champion, @ IBM Research, and Instructor @ Coursera
